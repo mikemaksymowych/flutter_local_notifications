@@ -32,6 +32,9 @@ class FlutterLocalNotificationsPlugin {
     } else if (platform.isIOS) {
       FlutterLocalNotificationsPlatform.instance =
           IOSFlutterLocalNotificationsPlugin();
+    } else if (platform.isMacOS) {
+      FlutterLocalNotificationsPlatform.instance =
+          MacOSFlutterLocalNotificationsPlugin();
     }
   }
 
@@ -58,6 +61,11 @@ class FlutterLocalNotificationsPlugin {
               as IOSFlutterLocalNotificationsPlugin)
           ?.initialize(initializationSettings?.ios,
               onSelectNotification: onSelectNotification);
+    } else if (_platform.isMacOS) {
+      return await (FlutterLocalNotificationsPlatform.instance
+      as MacOSFlutterLocalNotificationsPlugin)
+          ?.initialize(initializationSettings?.macos,
+          onSelectNotification: onSelectNotification);
     }
     return true;
   }
@@ -75,6 +83,10 @@ class FlutterLocalNotificationsPlugin {
     } else if (_platform.isIOS) {
       return await (FlutterLocalNotificationsPlatform.instance
               as IOSFlutterLocalNotificationsPlugin)
+          ?.getNotificationAppLaunchDetails();
+    } else if (_platform.isMacOS) {
+      return await (FlutterLocalNotificationsPlatform.instance
+              as MacOSFlutterLocalNotificationsPlugin)
           ?.getNotificationAppLaunchDetails();
     } else {
       return await FlutterLocalNotificationsPlatform.instance
@@ -98,6 +110,11 @@ class FlutterLocalNotificationsPlugin {
               as IOSFlutterLocalNotificationsPlugin)
           ?.show(id, title, body,
               notificationDetails: notificationDetails?.iOS, payload: payload);
+    } else if (_platform.isMacOS) {
+      await (FlutterLocalNotificationsPlatform.instance
+              as MacOSFlutterLocalNotificationsPlugin)
+          ?.show(id, title, body,
+              notificationDetails: notificationDetails?.macOS, payload: payload);
     } else {
       await FlutterLocalNotificationsPlatform.instance?.show(id, title, body);
     }
@@ -127,8 +144,13 @@ class FlutterLocalNotificationsPlugin {
               payload: payload, androidAllowWhileIdle: androidAllowWhileIdle);
     } else if (_platform.isIOS) {
       await (FlutterLocalNotificationsPlatform.instance
-              as IOSFlutterLocalNotificationsPlugin)
+            as IOSFlutterLocalNotificationsPlugin)
           ?.schedule(id, title, body, scheduledDate, notificationDetails?.iOS,
+              payload: payload);
+    } else if (_platform.isMacOS) {
+      await (FlutterLocalNotificationsPlatform.instance
+            as MacOSFlutterLocalNotificationsPlugin)
+          ?.schedule(id, title, body, scheduledDate, notificationDetails?.macOS,
               payload: payload);
     }
   }
@@ -149,6 +171,11 @@ class FlutterLocalNotificationsPlugin {
               as IOSFlutterLocalNotificationsPlugin)
           ?.periodicallyShow(id, title, body, repeatInterval,
               notificationDetails: notificationDetails?.iOS, payload: payload);
+    } else if (_platform.isMacOS) {
+      await (FlutterLocalNotificationsPlatform.instance
+              as MacOSFlutterLocalNotificationsPlugin)
+          ?.periodicallyShow(id, title, body, repeatInterval,
+              notificationDetails: notificationDetails?.macOS, payload: payload);
     } else {
       await FlutterLocalNotificationsPlatform.instance
           ?.periodicallyShow(id, title, body, repeatInterval);
@@ -171,6 +198,12 @@ class FlutterLocalNotificationsPlugin {
           ?.showDailyAtTime(
               id, title, body, notificationTime, notificationDetails?.iOS,
               payload: payload);
+    } else if (_platform.isMacOS) {
+      await (FlutterLocalNotificationsPlatform.instance
+              as MacOSFlutterLocalNotificationsPlugin)
+          ?.showDailyAtTime(
+              id, title, body, notificationTime, notificationDetails?.macOS,
+              payload: payload);
     }
   }
 
@@ -189,6 +222,12 @@ class FlutterLocalNotificationsPlugin {
               as IOSFlutterLocalNotificationsPlugin)
           ?.showWeeklyAtDayAndTime(
               id, title, body, day, notificationTime, notificationDetails?.iOS,
+              payload: payload);
+    } else if (_platform.isMacOS) {
+      await (FlutterLocalNotificationsPlatform.instance
+              as MacOSFlutterLocalNotificationsPlugin)
+          ?.showWeeklyAtDayAndTime(
+              id, title, body, day, notificationTime, notificationDetails?.macOS,
               payload: payload);
     }
   }

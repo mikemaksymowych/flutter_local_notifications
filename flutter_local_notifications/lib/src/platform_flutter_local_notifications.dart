@@ -8,6 +8,8 @@ import 'platform_specifics/android/initialization_settings.dart';
 import 'platform_specifics/android/notification_details.dart';
 import 'platform_specifics/ios/initialization_settings.dart';
 import 'platform_specifics/ios/notification_details.dart';
+import 'platform_specifics/macos/initialization_settings.dart';
+import 'platform_specifics/macos/notification_details.dart';
 import 'helpers.dart';
 import 'typedefs.dart';
 import 'types.dart';
@@ -266,6 +268,131 @@ class IOSFlutterLocalNotificationsPlugin
   Future<void> periodicallyShow(
       int id, String title, String body, RepeatInterval repeatInterval,
       {IOSNotificationDetails notificationDetails, String payload}) async {
+    validateId(id);
+    await _channel.invokeMethod('periodicallyShow', <String, dynamic>{
+      'id': id,
+      'title': title,
+      'body': body,
+      'calledAt': DateTime.now().millisecondsSinceEpoch,
+      'repeatInterval': repeatInterval.index,
+      'platformSpecifics': notificationDetails?.toMap(),
+      'payload': payload ?? ''
+    });
+  }
+
+  Future<void> _handleMethod(MethodCall call) {
+    switch (call.method) {
+      case 'selectNotification':
+        return _onSelectNotification(call.arguments);
+
+      case 'didReceiveLocalNotification':
+        return _onDidReceiveLocalNotification(
+            call.arguments['id'],
+            call.arguments['title'],
+            call.arguments['body'],
+            call.arguments['payload']);
+      default:
+        return Future.error('method not defined');
+    }
+  }
+}
+
+/// macOS implementation of the local notifications plugin
+class MacOSFlutterLocalNotificationsPlugin
+    extends MethodChannelFlutterLocalNotificationsPlugin {
+  SelectNotificationCallback _onSelectNotification;
+
+  DidReceiveLocalNotificationCallback _onDidReceiveLocalNotification;
+
+  /// Initializes the plugin. Call this method on application before using the plugin further.
+  /// This should only be done once. When a notification created by this plugin was used to launch the app,
+  /// calling `initialize` is what will trigger to the `onSelectNotification` callback to be fire.
+  Future<bool> initialize(MacOSInitializationSettings initializationSettings,
+      {SelectNotificationCallback onSelectNotification}) async {
+    _onSelectNotification = onSelectNotification;
+    _onDidReceiveLocalNotification =
+        initializationSettings.onDidReceiveLocalNotification;
+    _channel.setMethodCallHandler(_handleMethod);
+    return await _channel.invokeMethod(
+        'initialize', initializationSettings.toMap());
+  }
+
+  /// Schedules a notification to be shown at the specified time with an optional payload that is passed through when a notification is tapped
+  Future<void> schedule(int id, String title, String body,
+      DateTime scheduledDate, MacOSNotificationDetails notificationDetails,
+      {String payload}) async {
+    validateId(id);
+    await _channel.invokeMethod('schedule', <String, dynamic>{
+      'id': id,
+      'title': title,
+      'body': body,
+      'millisecondsSinceEpoch': scheduledDate.millisecondsSinceEpoch,
+      'platformSpecifics': notificationDetails?.toMap(),
+      'payload': payload ?? ''
+    });
+  }
+
+  /// Shows a notification on a daily interval at the specified time
+  Future<void> showDailyAtTime(int id, String title, String body,
+      Time notificationTime, MacOSNotificationDetails notificationDetails,
+      {String payload}) async {
+    validateId(id);
+    await _channel.invokeMethod('showDailyAtTime', <String, dynamic>{
+      'id': id,
+      'title': title,
+      'body': body,
+      'calledAt': DateTime.now().millisecondsSinceEpoch,
+      'repeatInterval': RepeatInterval.Daily.index,
+      'repeatTime': notificationTime.toMap(),
+      'platformSpecifics': notificationDetails?.toMap(),
+      'payload': payload ?? ''
+    });
+  }
+
+  /// Shows a notification on a daily interval at the specified time
+  Future<void> showWeeklyAtDayAndTime(
+      int id,
+      String title,
+      String body,
+      Day day,
+      Time notificationTime,
+      MacOSNotificationDetails notificationDetails,
+      {String payload}) async {
+    validateId(id);
+
+    await _channel.invokeMethod('showWeeklyAtDayAndTime', <String, dynamic>{
+      'id': id,
+      'title': title,
+      'body': body,
+      'calledAt': DateTime.now().millisecondsSinceEpoch,
+      'repeatInterval': RepeatInterval.Weekly.index,
+      'repeatTime': notificationTime.toMap(),
+      'day': day.value,
+      'platformSpecifics': notificationDetails?.toMap(),
+      'payload': payload ?? ''
+    });
+  }
+
+  @override
+  Future<void> show(int id, String title, String body,
+      {MacOSNotificationDetails notificationDetails, String payload}) {
+    validateId(id);
+    return _channel.invokeMethod(
+      'show',
+      <String, dynamic>{
+        'id': id,
+        'title': title,
+        'body': body,
+        'payload': payload ?? '',
+        'platformSpecifics': notificationDetails?.toMap(),
+      },
+    );
+  }
+
+  @override
+  Future<void> periodicallyShow(
+      int id, String title, String body, RepeatInterval repeatInterval,
+      {MacOSNotificationDetails notificationDetails, String payload}) async {
     validateId(id);
     await _channel.invokeMethod('periodicallyShow', <String, dynamic>{
       'id': id,
